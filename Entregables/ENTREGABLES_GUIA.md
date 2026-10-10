@@ -247,6 +247,7 @@ Contiene la investigación profunda que respalda toda la propuesta:
 | `investigacion_soluciones_existentes.md` | Análisis general de productos, tecnologías, papers y campañas que ya abordan esta problemática en el mundo |
 | `investigacion_profunda_fichas_y_contactos.md` | Fichas técnicas detalladas (SmartDose, Ecolab, SEKO, Hydro Systems, Tennant), enlaces oficiales TDS/SDS, contactos locales en Ecuador y plantillas de correo listas para enviar |
 | `explicacion_smartdose.md` | Guía visual y práctica paso a paso del funcionamiento de SmartDose, anatomía del envase y enlaces a imágenes reales |
+| `estandares_mundiales.md` | Estándares internacionales de la ISSA, recipientes ergonómicos normalizados (750 mL y 8 L), carros de limpieza y relación con el Reto 4 |
 | `contexto_tecnico_dosificacion.md` | Fundamentación técnica sobre dosificación inteligente, balance de materia, y tratamiento de aguas grises |
 
 ---
