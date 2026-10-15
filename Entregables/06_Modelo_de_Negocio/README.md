@@ -5,6 +5,8 @@
 
 ## 📌 Cosas por Hacer (Tareas Pendientes)
 
+> Documentos desarrollados: [modelo_canvas.md](modelo_canvas.md), [propuesta_de_valor.md](propuesta_de_valor.md) y [costos_principales.md](costos_principales.md).
+
 1. **`modelo_canvas.png`** (o `.pdf`)
    - Business Model Canvas de una página:
 
