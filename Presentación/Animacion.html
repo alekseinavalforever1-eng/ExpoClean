@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animación del Mecanismo Peristáltico</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 24px;
+            width: 450px;
+            text-align: center;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333333;
+        }
+        .canvas-container {
+            position: relative;
+            margin: 20px 0;
+        }
+        canvas {
+            background-color: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .info-box {
+            background-color: #fdf5e6;
+            border-left: 4px solid #ffa500;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 14px;
+            line-height: 1.4;
+            min-height: 50px;
+            text-align: left;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        button {
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            flex-grow: 1;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Mecanismo de Bomba Peristáltica</h2>
+    <div class="canvas-container">
+        <canvas id="pumpCanvas" width="400" height="300"></canvas>
+    </div>
+    <div id="infoText" class="info-box">Cargando fase...</div>
+    <div class="controls">
+        <button id="prevBtn" onclick="prevStep()">← Paso Anterior</button>
+        <button id="nextBtn" onclick="nextStep()">Siguiente Paso →</button>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('pumpCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let currentStep = 0;
+
+    const steps = [
+        {
+            title: "Paso 1: Succión (Entrada)",
+            text: "El rotor central gira. El rodillo superior empieza a aplastar la manguera flexible. Esto bloquea el retorno y, al avanzar, genera un vacío detrás que 'jala' y succiona el líquido desde la botella.",
+            angle: 0,
+            liquidProgress: 0.25,
+            squeezePos: 1 
+        },
+        {
+            title: "Paso 2: Captura (Compresión)",
+            text: "A medida que el rotor gira, el segundo rodillo presiona la manguera. El líquido queda atrapado ('atrapado') en un volumen exacto y hermético entre los dos rodillos que aplastan el tubo.",
+            angle: Math.PI / 2,
+            liquidProgress: 0.5,
+            squeezePos: 2
+        },
+        {
+            title: "Paso 3: Dosificación (Expulsión)",
+            text: "La rotación continúa y los rodillos empujan de manera constante ese volumen de líquido atrapado hacia el extremo de salida, expulsándolo con precisión matemática sin tocar el motor.",
+            angle: Math.PI,
+            liquidProgress: 0.8,
+            squeezePos: 3
+        }
+    ];
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const cx = 200;
+        const cy = 150;
+        const rTube = 85; 
+        const tWidth = 18; 
+
+        // 1. Dibujar manguera externa no ocluida (en gris)
+        ctx.strokeStyle = '#e0e0e0';
+        ctx.lineWidth = tWidth;
+        ctx.lineCap = 'round';
+        
+        ctx.beginPath();
+        ctx.moveTo(50, 260); // Entrada
+        ctx.arc(cx, cy, rTube, Math.PI * 0.75, Math.PI * 2.25); 
+        ctx.lineTo(350, 260); // Salida
+        ctx.stroke();
+
+        // 2. Dibujar Líquido en base al progreso
+        ctx.strokeStyle = '#33a5ff';
+        ctx.lineWidth = tWidth - 2;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+
+        const step = steps[currentStep];
+        if (step.liquidProgress > 0) {
+            ctx.moveTo(50, 260); // Entrada siempre tiene agua
+            
+            // Ángulo final del líquido
+            let targetAngle = Math.PI * 0.75 + (Math.PI * 1.5 * step.liquidProgress);
+            ctx.arc(cx, cy, rTube, Math.PI * 0.75, targetAngle); 
+            
+            if (step.liquidProgress > 0.75) {
+                ctx.lineTo(350, 260); // Ya sale el líquido
+            }
+        }
+        ctx.stroke();
+
+        // 3. Dibujar marcas de compresión (donde se aplasta el tubo)
+        ctx.fillStyle = '#ff4d4d';
+        if (step.squeezePos === 1) {
+            drawSqueeze(cx - rTube, cy, tWidth);
+        } else if (step.squeezePos === 2) {
+            drawSqueeze(cx - rTube/1.4, cy - rTube/1.4, tWidth);
+            drawSqueeze(cx + rTube/1.4, cy + rTube/1.4, tWidth);
+        } else if (step.squeezePos === 3) {
+            drawSqueeze(cx, cy - rTube, tWidth);
+            drawSqueeze(cx, cy + rTube, tWidth);
+        }
+
+        // 4. Rotor Central y Brazos
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(step.angle);
+
+        // Centro del rotor
+        ctx.fillStyle = '#4a4a4a';
+        ctx.beginPath();
+        ctx.arc(0, 0, 30, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Brazo 1
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 10;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -rTube + 4);
+        ctx.stroke();
+
+        // Rodillo 1
+        ctx.fillStyle = '#ffcc00';
+        ctx.beginPath();
+        ctx.arc(0, -rTube + 4, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Brazo 2
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, rTube - 4);
+        ctx.stroke();
+
+        // Rodillo 2
+        ctx.fillStyle = '#ffcc00';
+        ctx.beginPath();
+        ctx.arc(0, rTube - 4, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Flecha de rotación central
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, 15, -Math.PI/2, 0);
+        ctx.stroke();
+        
+        ctx.restore();
+
+        // 5. Textos de entrada / salida
+        ctx.fillStyle = '#666';
+        ctx.font = 'bold 12px Arial';
+        ctx.fillText("ENTRADA (Botella)", 30, 285);
+        ctx.fillText("SALIDA (Dosis)", 290, 285);
+
+        // Actualizar interfaz
+        document.getElementById('infoText').innerHTML = `<strong>${step.title}</strong><br>${step.text}`;
+        document.getElementById('prevBtn').disabled = currentStep === 0;
+        document.getElementById('nextBtn').disabled = currentStep === steps.length - 1;
+    }
+
+    function drawSqueeze(x, y, size) {
+        ctx.fillStyle = '#ff3b30';
+        ctx.beginPath();
+        ctx.arc(x, y, size/2, 0, Math.PI*2);
+        ctx.fill();
+    }
+
+    function nextStep() {
+        if (currentStep < steps.length - 1) {
+            currentStep++;
+            draw();
+        }
+    }
+
+    function prevStep() {
+        if (currentStep > 0) {
+            currentStep--;
+            draw();
+        }
+    }
+
+    // Inicializar
+    draw();
+</script>
+
+</body>
+</html>
